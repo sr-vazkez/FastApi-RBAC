@@ -1,2 +1,3 @@
-# FastApi-RBAC
-FastAPI RBAC Users
+# spuky_api
+
+Rest API utilizando fastapi

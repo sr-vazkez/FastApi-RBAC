@@ -1,0 +1,57 @@
+version: "3"
+services:
+  db_spuky:
+    image: mariadb
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: 
+      MARIADB_DATABASE: 
+      MARIADB_USER: 
+      MARIADB_PASSWORD: 
+    volumes:
+      - db_data_spuky:/var/lib/mysql
+  backend:  
+    depends_on:
+      - db_spuky
+    image: python:3.9
+    restart: always
+    command: >
+      bash -c 'cd /code && 
+      pip install --no-cache-dir --upgrade -r /code/requirements.txt && 
+      alembic upgrade head && 
+      uvicorn app.main:app --host 0.0.0.0 --port 8080 --ssl-keyfile /code/localhost.key --ssl-certfile /code/localhost.crt --log-config log.ini'
+    ports:
+      - "8090:8080"
+    environment:
+      TZ: "America/Mexico_City"
+      DATABASE_USER: 
+      DATABASE_PASSWORD: 
+      DATABASE_HOSTNAME: db_prod_lab
+      DATABASE_PORT: 3306
+      DATABASE_NAME: 
+      # openssl rand -hex 32
+      secret: 
+      # For Production left values in blank and desactivate documentation
+      openapi_url: /openapi/v1/
+      docs_url: /docs
+      redoc_url: /redoc
+    volumes:
+      - ./requirements.txt:/code/requirements.txt
+      - ./app:/code/app
+      - ./middleware:/code/middleware
+      - ./migrations:/code/migrations
+      - ./alembic.ini:/code/alembic.ini
+      - ./localhost.key:/code/localhost.key
+      - ./localhost.crt:/code/localhost.crt
+      - ./ssl:/code/ssl
+      - ./log.ini:/code/log.ini
+      - backend_logs:/code/logs/
+
+
+volumes:
+  db_data_spuky: {}
+  backend_logs: {}
+
+networks:
+  default:
+    driver: bridge
