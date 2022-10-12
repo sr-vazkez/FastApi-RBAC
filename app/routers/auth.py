@@ -2,7 +2,7 @@ from fastapi import APIRouter, Body, Depends
 from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
-from fastapi_jwt_auth import AuthJWT
+from fastapi_another_jwt_auth import AuthJWT
 
 from app.dependencies.data_conexion import get_db
 from app.internal.auth import AuthActions

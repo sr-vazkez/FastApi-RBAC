@@ -2,7 +2,7 @@ from typing import Optional
 from fastapi import Depends, HTTPException, status
 
 from sqlalchemy.orm import Session
-from fastapi_jwt_auth import AuthJWT
+from fastapi_another_jwt_auth import AuthJWT
 
 from app.dependencies.data_conexion import get_db
 from app.models.users import Users

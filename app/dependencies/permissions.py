@@ -1,6 +1,6 @@
 from typing_extensions import Self
 from fastapi import HTTPException, Depends, status
-from fastapi_jwt_auth import AuthJWT
+from fastapi_another_jwt_auth import AuthJWT
 
 class RoleChecker:
     """

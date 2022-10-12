@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from sqlalchemy.orm import Session
-from fastapi_jwt_auth import AuthJWT
+from fastapi_another_jwt_auth import AuthJWT
 
 from app.models import Users
 from app.models.actions import Actions

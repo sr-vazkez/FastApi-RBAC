@@ -3,7 +3,7 @@ from uuid import UUID
 from fastapi import APIRouter, status, Depends, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from fastapi_jwt_auth import AuthJWT
+from fastapi_another_jwt_auth import AuthJWT
 from app.dependencies.data_conexion import get_db
 from app.schemas import schemas_config
 from app.internal.users import UsersActions
