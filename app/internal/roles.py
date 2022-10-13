@@ -100,9 +100,7 @@ class RoleActions():
             .limit(limit)\
             .all()
         # Sacar el numero de registros
-        total = db.query(Role)\
-            .filter_by(is_deleted=False)\
-            .count()
+        total = len(show_roles)
 
         res = {
             "success": True,
@@ -279,10 +277,6 @@ class RoleActions():
                 en caso de tener exito nos mostarara la propiedad numRows con la cantidad de todos
                 los registros y data con la informacion solicitada. 
         """
-        total = db.query(Users)\
-            .filter_by(role_id=id)\
-            .filter_by(is_deleted=False)\
-            .count()
         show_role_with_users = db.query(
             Role.id,
             Role.name,
@@ -298,6 +292,9 @@ class RoleActions():
             .filter(Users.is_deleted == False)\
             .filter(Role.is_deleted == False)\
             .offset(start).limit(limit).all()
+
+        total = len(show_role_with_users)
+
         res = {"success": True,
                "numRows": total,
                "data": show_role_with_users}
@@ -342,20 +339,8 @@ class RoleActions():
             .offset(start)\
             .limit(limit)\
             .all()
-        total = db.query(
-            Module.name.label("module_name"),
-            Actions.action_name
-        ).order_by(Module.name)\
-            .join(Role_Actions, isouter=False)\
-            .join(Module, isouter=False)\
-            .filter(Role_Actions.role_id == id)\
-            .filter(Role_Actions.actions_id == Actions.id)\
-            .filter(Actions.module_id == Module.id)\
-            .filter(Actions.is_deleted == False)\
-            .filter(Actions.value == True)\
-            .filter(Module.is_deleted == False)\
-            .filter(Role_Actions.is_deleted == False)\
-            .count()
+            
+        total = len(permission)
 
         res = {
             "success": True,

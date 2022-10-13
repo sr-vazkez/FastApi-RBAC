@@ -103,9 +103,7 @@ class ModuleActions():
             .limit(limit)\
             .all()
         # Sacar el numero de registros
-        total = db.query(Module)\
-            .filter_by(is_deleted=False)\
-            .count()
+        total = len(show_modules)
 
         res = {
             "success": True,
@@ -291,11 +289,6 @@ class ModuleActions():
                 los registros y data con la informacion solicitada. 
 
         """
-        total = db.query(Actions)\
-            .filter(Actions.module_id == id)\
-            .filter_by(is_deleted=False)\
-            .count()
-
         show_module_with_actions = db.query(
             Module.id,
             Module.name,
@@ -313,7 +306,10 @@ class ModuleActions():
             .filter(Module.is_deleted == False)\
             .offset(start).limit(limit).all()
 
+        total =  len(show_module_with_actions)
+
         res = {"success": True,
                "numRows": total,
                "data": show_module_with_actions}
+               
         return jsonable_encoder(res)

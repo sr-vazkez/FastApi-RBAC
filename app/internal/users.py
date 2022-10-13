@@ -156,10 +156,6 @@ class UsersActions():
                 en caso de tener exito nos mostarara la propiedad numRows con la cantidad de todos
                 los registros y data con la informacion solicitada. 
         """
-        total = db.query(Users)\
-            .filter_by(is_deleted=False)\
-            .count()
-
         show_users = db.query(
             Users.id,
             Users.email,
@@ -174,6 +170,8 @@ class UsersActions():
             .filter(Role.is_deleted == False)\
             .offset(start).limit(limit).all()
 
+        total = len(show_users)
+        
         res = {"success": True,
                "numRows": total,
                "data": show_users}

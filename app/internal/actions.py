@@ -139,10 +139,8 @@ class ActionsOperations():
             .offset(start)\
             .limit(limit)\
             .all()
-        # Sacar el numero de registros
-        total = db.query(Actions)\
-            .filter_by(is_deleted=False)\
-            .count()
+
+        total = len(show_roles)
         
         res = {
             "success": True,

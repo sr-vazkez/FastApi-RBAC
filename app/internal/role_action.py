@@ -36,11 +36,7 @@ class RoleActions():
             los registros y data con la informacion solicitada. 
         
         """  
-        total = db.query(Role_Actions)\
-        .filter_by(is_deleted=False)\
-        .count()
-
-        actions=db.query(
+        actions = db.query(
         Role_Actions.id,
         Role_Actions.actions_id,
         Role_Actions.role_id,
@@ -50,6 +46,8 @@ class RoleActions():
         .offset(start)\
         .limit(limit)\
         .all()
+        
+        total = len(actions)
         res = {"success": True,"numRows": total,"data": actions}
         return jsonable_encoder(res)
 
