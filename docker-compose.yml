@@ -4,12 +4,19 @@ services:
     image: mariadb
     restart: always
     environment:
+      TZ: "America/Mexico_City"
       MARIADB_ROOT_PASSWORD: 
       MARIADB_DATABASE: 
       MARIADB_USER: 
       MARIADB_PASSWORD: 
     volumes:
       - db_data_spuky:/var/lib/mysql
+      - ./mysql/conf.d:/etc/mysql/conf.d
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
   backend:  
     depends_on:
       - db_spuky
@@ -17,7 +24,7 @@ services:
     restart: always
     command: >
       bash -c 'cd /code && 
-      pip install --no-cache-dir --upgrade -r /code/requirements.txt && 
+      pip install -r /code/requirements.txt && 
       alembic upgrade head && 
       uvicorn app.main:app --host 0.0.0.0 --port 8080 --ssl-keyfile /code/localhost.key --ssl-certfile /code/localhost.crt --log-config log.ini'
     ports:
@@ -32,7 +39,7 @@ services:
       # openssl rand -hex 32
       secret: 
       # For Production left values in blank and desactivate documentation
-      openapi_url: /openapi/v1/
+      openapi_url: /openapi.json
       docs_url: /docs
       redoc_url: /redoc
     volumes:
@@ -45,12 +52,22 @@ services:
       - ./localhost.crt:/code/localhost.crt
       - ./ssl:/code/ssl
       - ./log.ini:/code/log.ini
+      - ./log_app:/code/log_app
+      - ./init_admin.py:/code/init_admin.py
+      - ./create_admin.py:/code/create_admin.py
       - backend_logs:/code/logs/
+      - app_logs:/code/log_app/
+
+    deploy:
+      resources:
+        limits:
+          memory: 4G
 
 
 volumes:
   db_data_spuky: {}
   backend_logs: {}
+  app_logs: {}
 
 networks:
   default:
