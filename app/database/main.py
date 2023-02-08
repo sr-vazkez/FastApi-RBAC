@@ -3,8 +3,14 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from decouple import config
 
-#SQLALCHEMY_DATABASE_URL = f"mysql+mysqlconnector://{config('DATABASE_USER')}:{config('DATABASE_PASSWORD')}@{config('DATABASE_HOSTNAME')}:{config('DATABASE_PORT')}/{config('DATABASE_NAME')}"
-SQLALCHEMY_DATABASE_URL = "sqlite:///database.db"
+string_connection = "mysql+mysqldb://"
+database_user = f"{config('DATABASE_USER')}:{config('DATABASE_PASSWORD')}@"
+database_hostname = f"{config('DATABASE_HOSTNAME')}:{config('DATABASE_PORT')}/"
+database_name = f"{config('DATABASE_NAME')}"
+
+SQLALCHEMY_DATABASE_URL = (
+    string_connection + database_user + database_hostname + database_name
+)
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=False, pool_recycle=3600)
 

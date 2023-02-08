@@ -12,7 +12,7 @@ from app.models.module import Module
 from app.models.role_actions import Role_Actions
 from app.models.roles import Role
 from app.schemas import schemas_config
-from app.internal.hashing import Hash
+from app.extras.hashing import Hash
 from app.dependencies.data_conexion import get_db
 
 

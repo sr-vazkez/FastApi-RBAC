@@ -7,7 +7,7 @@ from fastapi import status
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from app.schemas import user_schemas
-from app.internal.hashing import Hash
+from app.extras.hashing import Hash
 from app.models.users import Users
 from app.models.roles import Role
 

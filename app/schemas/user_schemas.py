@@ -7,20 +7,42 @@ from pydantic import BaseModel, Field, EmailStr, root_validator
 
 
 class UserBase(BaseModel):
-    # Base del model User
+    """Modelo base para los objetos users.
+
+    Args:
+        BaseModel (BaseModel): Pydantic BaseModel
+    """
     email: EmailStr = Field(...)
 
     class Config():
+        """Habilitamos el modo orm.
+
+        Para no tener problemas con el ORM.
+        """
+        
         orm_mode = True
 
 
 class Users(UserBase):
+    """Modelo Que incluye el ID del user.
+
+    Args:
+        UserBase (BaseModel): : Herencia del modelo para
+         evitar escribir mas.
+    """
+    
     id: Annotated[str, Field(default_factory=lambda: uuid4(
     ).hex, example="dff942ee-1f41-11ed-861d-0242ac120002"), ]
 
 
 class UserCreate(UserBase):
-    # Esquema para crear usuarios
+    """Modelo de validacion para crear users.
+
+    Args:
+        UserBase (BaseModel): Herencia del modelo para
+         evitar escribir mas.
+    """
+
     password: str = Field(
         ...,
         min_length=8
@@ -32,7 +54,12 @@ class UserCreate(UserBase):
 
 
 class UpdatePassMe(BaseModel):
-    # Esquema que se usa para actualizar el password de un user
+    """Modelo de validacion para actualizar user's password.
+
+    Args:
+        BaseModel (BaseModel): Pydantic BaseModel
+    """
+
     actual_password: str = Field(
         ...,
         min_length=8
@@ -49,6 +76,20 @@ class UpdatePassMe(BaseModel):
 
     @root_validator()
     def password_macth(vls, values):
+        """Se valida que coincida el password actual.
+
+        Args:
+            vls (self): self value
+            values (str): valores con los cuales realizamos
+             la validacion
+
+        Raises:
+            ValueError: En caso de no cumplir la condicion
+             se levanta una exception de tipo value.
+
+        Returns:
+            values: Si todo sale bien se regresan los valores.
+        """
         new_password = values.get("new_password")
         password_confirmation = values.get("password_confirmation")
         if new_password != password_confirmation:
@@ -56,10 +97,21 @@ class UpdatePassMe(BaseModel):
         return values
 
     class Config():
+        """Habilitamos el modo orm.
+
+        Para no tener problemas con el ORM.
+        """
+
         orm_mode = True
 
 
 class UpdatePass(BaseModel):
+    """Modelo de para actualizar user's password.
+
+    Args:
+        BaseModel (BaseModel): Pydantic BaseModel
+    """
+
     new_password: str = Field(
         ...,
         min_length=8
@@ -72,6 +124,20 @@ class UpdatePass(BaseModel):
 
     @root_validator()
     def password_macth(vls, values):
+        """Se valida que coincidan los passwords.
+
+        Args:
+            vls (self): self value
+            values (str): valores con los cuales realizamos
+             la validacion
+
+        Raises:
+            ValueError: En caso de no cumplir la condicion
+             se levanta una exception de tipo value.
+
+        Returns:
+            values: Si todo sale bien se regresan los valores.
+        """
         new_password = values.get("new_password")
         password_confirmation = values.get("password_confirmation")
         if new_password != password_confirmation:
@@ -80,7 +146,12 @@ class UpdatePass(BaseModel):
 
 
 class UpdateUser(BaseModel):
-    # SE UTILIZA PARA PODER  ACTUALIZAR LA INFORMACION DEL USER
+    """Modelo de validacion para actualizar users.
+
+    Args:
+        BaseModel (BaseModel): Pydantic BaseModel
+    """
+
     email: Optional[EmailStr] = Field(None, description="Email of the user")
     status: Optional[bool] = True
 
@@ -89,7 +160,12 @@ class UpdateUser(BaseModel):
 
 
 class ShowInfoUser(BaseModel):
-    # MOSTRAR USUARIOS
+    """Modelo de validacion al mostrar propiedades.
+
+    Args:
+        BaseModel (BaseModel): Pydantic BaseModel
+    """
+
     id: Annotated[str, Field(default_factory=lambda: uuid4(
     ).hex, example="dff942ee-1f41-11ed-861d-0242ac120002"), ]
     email: EmailStr = Field(...)
@@ -102,29 +178,66 @@ class ShowInfoUser(BaseModel):
         None, description="Created on of the role")
 
     class Config():
+        """Habilitamos el modo orm.
+
+        Para no tener problemas con el ORM.
+        """
+
         orm_mode = True
 
 
 class ShowUsers(BaseModel):
+    """Modelo de validacion al mostrar propiedades.
+
+    Args:
+        BaseModel (BaseModel): Pydantic BaseModel
+    """
+
     success: bool = True
     numRows: int
     data: List[ShowInfoUser]
 
     class Config():
+        """Habilitamos el modo orm.
+
+        Para no tener problemas con el ORM.
+        """
+
         orm_mode = True
 
 
 class ShowUser(BaseModel):
+    """Modelo de validacion al mostrar propiedades.
+
+    Args:
+        BaseModel (BaseModel): Pydantic BaseModel
+    """
+
     success: bool = True
     data: ShowInfoUser
 
     class Config():
+        """Habilitamos el modo orm.
+
+        Para no tener problemas con el ORM.
+        """
+
         orm_mode = True
 
 
 class ShowUserWithRole(BaseModel):
+    """Modelo de validacion al mostrar propiedades.
+
+    Args:
+        BaseModel (BaseModel): Pydantic BaseModel
+    """
+
     success: bool = True
     data: ShowInfoUser
 
     class Config():
+        """Habilitamos el modo orm.
+
+        Para no tener problemas con el ORM.
+        """
         orm_mode = True
