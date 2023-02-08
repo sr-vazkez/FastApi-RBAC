@@ -2,22 +2,27 @@ from typing import Optional
 from fastapi import Depends, HTTPException, status
 
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import false
 from fastapi_another_jwt_auth import AuthJWT
 
 from app.dependencies.data_conexion import get_db
 from app.models.users import Users
 
 
-
 class UserNotFound(Exception):
+    """Clase para poder generar exceptions.
+
+    Args:
+        Exception (Exception): Excepcion
+    """
+
     pass
 
 
 def require_user(
-    db: Session = Depends(get_db), 
-    Authorize: AuthJWT = Depends()
-)-> Optional[HTTPException]:
-    """_summary_
+    db: Session = Depends(get_db), Authorize: AuthJWT = Depends()
+) -> Optional[HTTPException]:
+    """Verificamos que el usuario exista en nuestros registros.
 
     Args:
         db (Session, optional): _description_. Defaults to Depends(get_db).
@@ -35,31 +40,31 @@ def require_user(
     try:
         Authorize.jwt_required()
         current_user = Authorize.get_jwt_subject()
-        user = db.query(Users).filter(Users.id == current_user)\
-            .filter(Users.is_deleted == False)\
+        user = (
+            db.query(Users)
+            .filter(Users.id == current_user)
+            .filter(Users.is_deleted == false())
             .first()
+        )
 
         if not user:
-            raise UserNotFound('User no longer exist')
+            raise UserNotFound("User no longer exist")
     except Exception as e:
         error = e.__class__.__name__
-        #print(error)
-        if error == 'MissingTokenError':
+        # print(error)
+        if error == "MissingTokenError":
             raise HTTPException(
-                status_code=status.HTTP_421_MISDIRECTED_REQUEST, detail={
-                    'status':False,
-                    'msg': "You are not logged in"
-                })
-        if error == 'UserNotFound':
+                status_code=status.HTTP_421_MISDIRECTED_REQUEST,
+                detail={"status": False, "msg": "You are not logged in"},
+            )
+        if error == "UserNotFound":
             raise HTTPException(
-                status_code=status.HTTP_421_MISDIRECTED_REQUEST, detail={
-                'status':False,
-                'msg': 'User no longer exist'
-                })
+                status_code=status.HTTP_421_MISDIRECTED_REQUEST,
+                detail={"status": False, "msg": "User no longer exist"},
+            )
         raise HTTPException(
-            status_code=status.HTTP_421_MISDIRECTED_REQUEST, detail={
-                'status':False,
-                'msg':'Token is invalid or has expired'
-            })
-        
+            status_code=status.HTTP_421_MISDIRECTED_REQUEST,
+            detail={"status": False, "msg": "Token is invalid or has expired"},
+        )
+
     return user

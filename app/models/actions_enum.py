@@ -1,8 +1,10 @@
-import enum 
+import enum
+
 
 class ActionName(enum.Enum):
-    """Lo que hacemos es definir solo 4 opciones
-    para poder crear una accion las cuales son
+    """Definimos solo 4 opciones.
+
+    Para poder crear una accion las cuales son
     - create
     - read
     - delete
@@ -11,11 +13,16 @@ class ActionName(enum.Enum):
     Args:
         enum (enum): Clase enum de python
     """
+
     create = "create"
     read = "read"
     delete = "delete"
     update = "update"
-    
 
-    def __str__(self):
+    def __str__(self) -> str:
+        """Metodo para retornar strings.
+
+        Returns:
+            str: Texto de algun enum seleccionado
+        """
         return str(self.value)

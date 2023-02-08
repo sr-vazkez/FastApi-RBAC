@@ -1,202 +1,224 @@
-from uuid import UUID
 from typing import Optional, Union
+from uuid import UUID
 
 from fastapi import APIRouter, status, Depends, Response
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
 from fastapi_another_jwt_auth import AuthJWT
+from sqlalchemy.orm import Session
 
 from app.dependencies.data_conexion import get_db
-from app.dependencies.verify_user import require_user
-from app.schemas import schemas_config
-from app.internal.actions import ActionsOperations
-from app.schemas import action_schemas
-from app.schemas.action_schemas import ActionCreate, UpdateAction
-from app.schemas.responses_schemas import responses
 from app.dependencies.permissions_policy import (
     actions_create,
     actions_read,
     actions_update,
-    actions_delete
+    actions_delete,
 )
+from app.internal.actions import ActionsOperations
+from app.schemas import action_schemas
+from app.schemas import schemas_config
+from app.schemas.responses_schemas import responses
 
-router = APIRouter(prefix="/actions",
+
+router = APIRouter(
+    prefix="/actions",
     tags=["Actions"],
     responses={**responses},
-    dependencies=[Depends(require_user)]
 )
 
 
-@router.post("/create",dependencies=[Depends(actions_create)],
-             status_code=status.HTTP_201_CREATED,
-             responses={201: {"model": schemas_config.GodMessage}},
-             summary="Create new action in the app",
-
-             )
-def create_action(
-    request: ActionCreate,
+@router.post(
+    "/create",
+    dependencies=[Depends(actions_create)],
+    status_code=status.HTTP_201_CREATED,
+    responses={201: {"model": schemas_config.GoodMessage}},
+    summary="Create new action in the app",
+)
+async def create_action(
+    request: action_schemas.ActionCreate,
     db: Session = Depends(get_db),
-    Authorize: AuthJWT = Depends()
-
+    Authorize: AuthJWT = Depends(),
 ) -> JSONResponse:
-    """
-    **Create Action Role**
+    """**Create Action Role**.
 
-    - This path operation creates a new action in the app and save the infomation in the database.
-    - **Just Admin Users** has access to this route.
+    Create new actions in the application.
+
+    - This Endpoint performs the operation of creating a new action in
+     the application and storing it in the database.
+    - Users can access when the role is assigned to
+     permission **create** to the Module **actions**.
 
     ***Important Note***
-    - In case that you introduce a repeat action in a module this not save in database.
-    - In case that you introduce invalid module id this return a HTTP ERROR
+    - To create an action, a module should be created.
+    - In case that you introduce a repeat action in a module
+     this not save in database.
+    - In case that you introduce invalid module id this
+     return a HTTP ERROR
 
     ***Parameters***:
     - Access Token
-    - Request body parameter:
-    - **actions: ActionCreate** -> Action model with action_name, value and module_id
 
-    **Return**: 
-    - **succesfull message** with **status code 200.** 
+    **Request body parameter**:
+    - actions: **ActionCreate** -> An ActionCreate model with action_name,
+     value and module_id (UUDI Format).
+
+    **Return**:
+    - **JSON Response** -> succesfull message
+    - **status code** -> 201
+
     """
     Authorize.jwt_required()
     current_user = Authorize.get_jwt_subject()
-    return ActionsOperations.create_new_action(db, current_user, request)
+    return ActionsOperations().create_new_action(db, current_user, request)
 
 
-@router.get("/",dependencies=[Depends(actions_read)],
-            response_model=action_schemas.ShowActions,
-            summary="Get All Actions",
-            status_code=status.HTTP_200_OK
-            )
-def all_actions(
+@router.get(
+    "/",
+    dependencies=[Depends(actions_read)],
+    status_code=status.HTTP_200_OK,
+    response_model=action_schemas.ShowActions,
+    summary="Get All Actions",
+)
+async def all_actions(
     Authorize: AuthJWT = Depends(),
     db: Session = Depends(get_db),
     start: Union[int, None] = None,
-    limit: Union[int, None] = None
-
+    limit: Union[int, None] = None,
 ) -> JSONResponse:
-    """
-    **Get Actions**
+    """**Get a list of Actions**.
 
-    - This path operation gets all actions store in database
-    - **Just Admin Users** has access to this route.
+    Obtain a list of all the actions recorded in the application
+
+    - This Endpoint performs the operation of obtaining a list of
+     shares in the application, you can also paginate the records.
+    - Users can access when the role is assigned to permission
+     **read** to the module **actions**.
 
     **Parameters** :
     - Access Token
-    - **Query Parameters**: 
-        - ***start*** is a initial value from start to show
-        - ***limit*** is the end of the values to show  
 
-    *Request body parameter* :
-    - **action: ShowActions** 
+    **Query Parameters**:
+    - ***start*** is a initial value from start to show
+    - ***limit*** is the end of the values to show
 
-    *Returns* 
-    - **actions list** with:
-    - id
-    - action_name
-    - value
-    - created_on
-    - module_id
-    - module_name
-    - module_created_on
+
+    *Returns*
+    - action: **ShowActions** -> A ShowActions model with: id (UUDI Format),
+     action_name, description, is_active, module_id (UUDI Format).
+    - **status code** -> 200
 
     """
     Authorize.jwt_required()
-    return ActionsOperations.get_all_actions(db, start, limit)
+    return ActionsOperations().get_all_actions(db, start, limit)
 
 
-@router.get("/{id}",dependencies=[Depends(actions_read)],
-            status_code=200,
-            response_model=action_schemas.ShowAction,
-            summary="Get Specific Action by id"
-            )
-def get_action(
-    id: UUID,
-    db: Session = Depends(get_db),
-    Authorize: AuthJWT = Depends()
+@router.get(
+    "/{id}",
+    dependencies=[Depends(actions_read)],
+    status_code=status.HTTP_200_OK,
+    response_model=action_schemas.ShowAction,
+    summary="Get Specific Action by id",
+)
+async def get_action(
+    id: UUID, db: Session = Depends(get_db), Authorize: AuthJWT = Depends()
 ) -> JSONResponse:
-    """
-    **Get Action**
+    """**Get One Action**.
 
-    - This path operation gets a role filtering by ID and 
-    show the information from the database.
-    - **Just Admin Users** has access to this route.
+    Get an action in the application using your ID as a filter.
 
-    ***Parameters***:
-
-    - **Request body parameter**:
-    - **action: ShowAction** -> Action model with id, action_name, value, created_on, module_id, module_name, module_created_on.
-    - **Path Parameter**: 
-        - Action id. 
-
-    Return 
-    - **Action model** with:
-    - id
-    - action_name
-    - value
-    - created_on
-    - module_id
-    - module_name
-    - module_created_on
-
-    """
-    Authorize.jwt_required()
-    return ActionsOperations.get_one_action(db, id)
-
-
-@router.put("/{id}/module/",dependencies=[Depends(actions_update)],
-            status_code=status.HTTP_202_ACCEPTED,
-            responses={202: {"model": schemas_config.GodMessage}},
-            summary="Update Action Information"
-            )
-def update_action(
-    request: UpdateAction,
-    id: UUID,
-    db: Session = Depends(get_db),
-    Authorize: AuthJWT = Depends()
-) -> JSONResponse:
-    """
-    ***Update Action*** 
-
-    - This path operation update an action information in the app
-    by id and save the infomation from the database.
-    - You can edit all fields 
-    - **Just Admin Users** has access to this route.
-
-    **Parameters**:
-
-    - Request body parameter:
-    - **action: UpdateAction** -> An Action model with id and updated email, status or role
-    - ***Path Parameter*** : 
-        - **Action id**. 
-
-    Return: 
-    - **status code 202** and **string message.** 
-    """
-    Authorize.jwt_required()
-    current_user = Authorize.get_jwt_subject()
-    return ActionsOperations.update_action_info(db, id,request, current_user)
-
-
-@router.delete("/{id}/delete/",dependencies=[Depends(actions_delete)],
-               status_code=status.HTTP_204_NO_CONTENT,
-               summary="Delete specific Action using user id",
-               response_class=Response
-               )
-def delete_action(
-    id: UUID,
-    db: Session = Depends(get_db),
-    Authorize: AuthJWT = Depends()
-) -> Optional[JSONResponse]:
-    """
-    ***Delete Action***
-
-    - This path operation delete users in the app by id from database
-    - **Just Admin Users** has access to this route.
+    - This Endpoint performs the operation of obtaining the information
+     of an application action using the ID (UUDI format), as a filter.
+    - Users can access when the role is assigned to
+     permission **read** to the module **actions**.
 
     **Parameters**:
     - Access Token
-    - Request path parameter: **user id**
-    Return Just **CODE 204**
+
+    **Path Parameter**:
+    - Action id -> (UUDI Format).
+
+    *Return*
+    - action: **ShowActions** -> A ShowActions model with: id (UUDI Format),
+     action_name, description, is_active, module_id (UUDI Format).
+    - **status code** -> 200
+
     """
     Authorize.jwt_required()
-    return ActionsOperations.delete_one_action(db, id)
+    return ActionsOperations().get_one_action(db, id)
+
+
+@router.put(
+    "/{id}",
+    dependencies=[Depends(actions_update)],
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={202: {"model": schemas_config.GoodMessage}},
+    summary="Update Action Information",
+)
+async def update_action(
+    request: action_schemas.UpdateAction,
+    id: UUID,
+    db: Session = Depends(get_db),
+    Authorize: AuthJWT = Depends(),
+) -> JSONResponse:
+    """***Update Action***.
+
+    Update the information of an action using your ID to select it.
+
+    - This Endpoint performs the operation of the action of the action.
+    - Select the action for your ID (UUDI Format).
+    - The action_name and description fields are optional.
+    if the API is left empty, it will take the current value of those fields.
+    - The is_Active field is mandatory.
+     This means that the value to perform this operation must be indicated.
+    - Users can access when the role is assigned
+     to permission **update** to the module **actions**.
+
+    **Parameters**:
+    - Access Token
+
+    **Request body parameter**:
+    - action: **UpdateAction** -> An UpdateAction model with action_name (Optional),
+     is_active (Obligatory) and description (Optional).
+
+    **Path Parameter**:
+    - Action id -> (UUDI Format).
+
+    Return:
+    - **JSON Response** -> string message
+    - **status code** -> 202
+
+    """
+    Authorize.jwt_required()
+    current_user = Authorize.get_jwt_subject()
+    return ActionsOperations().update_action_info(db, id, request, current_user)
+
+
+@router.delete(
+    "/{id}/delete/",
+    dependencies=[Depends(actions_delete)],
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    summary="Delete specific Action using user id",
+)
+async def delete_action(
+    id: UUID, db: Session = Depends(get_db), Authorize: AuthJWT = Depends()
+) -> Optional[JSONResponse]:
+    """***Delete Action***.
+
+    Delete an action in the application by selecting it by its id.
+
+    - This path operation delete actions in the app by id from database.
+    - Users can access when the role is assigned
+     to permission **delete** to the module **actions**.
+
+    **Parameters**:
+    - Access Token
+
+    **Path Parameter**:
+    - Actions ID -> (UUDI Format).
+
+    Return
+    - **status code** -> 204
+
+    """
+    Authorize.jwt_required()
+    return ActionsOperations().delete_one_action(db, id)

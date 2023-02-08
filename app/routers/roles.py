@@ -1,248 +1,303 @@
-from typing import Union
+from typing import Optional, Union
 from uuid import UUID
-from fastapi import APIRouter,status, Depends, Response
-from sqlalchemy.orm import Session
+
+
+from fastapi import APIRouter, status, Depends, Response
+from fastapi.responses import JSONResponse
 from fastapi_another_jwt_auth import AuthJWT
+from sqlalchemy.orm import Session
+
+
 from app.dependencies.data_conexion import get_db
-from app.dependencies.verify_user import require_user
-from app.schemas import schemas_config
-from app.internal.roles import RoleActions
-from app.schemas import role_schemas
-from app.schemas.responses_schemas import responses
 from app.dependencies.permissions_policy import (
     roles_create,
     roles_read,
     roles_update,
-    roles_delete
+    roles_delete,
 )
+from app.internal.roles import RoleActions
+from app.schemas import schemas_config, role_schemas
+from app.schemas.responses_schemas import responses
 
 
-router = APIRouter(prefix="/roles",
+router = APIRouter(
+    prefix="/roles",
     tags=["Roles"],
     responses={**responses},
-    dependencies=[Depends(require_user)]
 )
 
 
-@router.post("/create", dependencies=[Depends(roles_create)],
-             status_code=status.HTTP_201_CREATED,
-             responses={201: {"model": schemas_config.GodMessage}},
-             summary="Create new Role",
-             )
-def create_role(
+@router.post(
+    "/create",
+    dependencies=[Depends(roles_create)],
+    status_code=status.HTTP_201_CREATED,
+    responses={201: {"model": schemas_config.GoodMessage}},
+    summary="Create new Role",
+)
+async def create_role(
     request: role_schemas.RoleCreate,
     db: Session = Depends(get_db),
-    Authorize: AuthJWT = Depends()
-):
-    """
-    **Create new Role**
+    Authorize: AuthJWT = Depends(),
+) -> JSONResponse:
+    """**Create new Role**.
 
-    - This path operation creates a new role in the app and save the infomation in the database.
-    - **Just Admin Users** has access to this route.
-    
+    Create new roles in the application.
+
+    - This endpoint creates a new role in the app and save
+     the infomation in the database.
+    - Users can access when the role is assigned
+     to permission **create** to the module **roles**.
+
     ***Important Note***
     - In case that you introduce a repeat role this not save in database.
-    
+
     ***Parameters***:
     - Access Token
-    - Request body parameter:
-    - **role:RoleCreate** -> A role model with name.
-    
-    **Return**: 
-    - **succesfull message** with **status code 200.** 
+
+    **Request body parameter**:
+    - role: **RoleCreate** -> A RoleCreate model with
+     name and description (Optional).
+
+    *Return*:
+    - **JSON Response** -> succesfull message
+    - **status code** -> 201
 
     """
     Authorize.jwt_required()
     current_user = Authorize.get_jwt_subject()
-    return RoleActions.create_new_role(db, request, current_user)
-    
+    return RoleActions().create_new_role(db, request, current_user)
 
-@router.get("/", dependencies=[Depends(roles_read)],
-            response_model=role_schemas.ShowRoles,
-            summary="Get All Roles",
-            status_code=status.HTTP_200_OK
-            )
-def all_roles(
+
+@router.get(
+    "/",
+    dependencies=[Depends(roles_read)],
+    status_code=status.HTTP_200_OK,
+    response_model=role_schemas.ShowRoles,
+    summary="Get All Roles",
+)
+async def all_roles(
     Authorize: AuthJWT = Depends(),
     db: Session = Depends(get_db),
     start: Union[int, None] = None,
-    limit: Union[int, None] = None
-):
-    """
-    **Get Roles**
-       
-     - This path operation gets all roles store in database
-    - **Just Admin Users** has access to this route.
+    limit: Union[int, None] = None,
+) -> JSONResponse:
+    """**Get a list of Roles**.
+
+    Obtain a list of all the roles recorded in the application
+
+    - This Endpoint performs the operation of obtaining a
+     list of roles in the application, you can also paginate the records.
+    - Users can access when the role is assigned
+     permission **read** to the module **roles**.
 
     **Parameters** :
     - Access Token
-    - **Query Parameters**: 
-        - ***start*** is a initial value from start to show
-        - ***limit*** is the end of the values to show  
 
-    *Request body parameter* :
-    - **role: ShowRoles** 
+    **Query Parameters**:
+    - ***start*** is a initial value from start to show
+    - ***limit*** is the end of the values to show
 
-    *Returns* 
-    - **roles list** with:
-    - id
-    - name
-    - date of register
+    *Returns*
+    - role: **ShowRoles**  -> A ShowActions model
+     with: id (UUDI Format), name, description.
+    - **status code** -> 200
 
     """
     Authorize.jwt_required()
-    return RoleActions.get_all_roles(db, start, limit)
+    return RoleActions().get_all_roles(db, start, limit)
 
 
-@router.get("/{id}", dependencies=[Depends(roles_read)],
-            status_code=200,
-            response_model=role_schemas.ShowRole,
-            summary="Get Specific Role by id"
-            )
-def show_role(
-    id: UUID,
-    db: Session = Depends(get_db),
-    Authorize: AuthJWT = Depends()
-):
-    """
-    **Get one Role**
-    
-    - This path operation gets a role filtering by ID and 
+@router.get(
+    "/{id}",
+    dependencies=[Depends(roles_read)],
+    status_code=status.HTTP_200_OK,
+    responses={200: {"model": role_schemas.ShowRole}},
+    response_model=role_schemas.ShowRole,
+    summary="Get Specific Role by id",
+)
+async def show_role(
+    id: UUID, db: Session = Depends(get_db), Authorize: AuthJWT = Depends()
+) -> JSONResponse:
+    """**Get one Role**.
+
+    This enpoint gets a role filtering by ID and
     show the information from the database.
-    - **Just Admin Users** has access to this route.
-    
-    ***Parameters***:
 
-    - **Request body parameter**:
-    - **role: ShowRole** -> A role model with: id, name,created_on
-    - **Path Parameter**: 
-        - role id. 
+    - Users can access when the role is assigned
+     permission **read** to the module **roles**.
+
+    ***Parameters***:
+    - Access Token
+
+    **Path Parameter**:
+    - role id -> (UUDI Format).
 
     Return
-    - **Role model** with:
-    - id
-    - name
-    - create_on
+    - role: **ShowRole** -> A ShowRole with id, name
+    - **status code** -> 200
 
     """
     Authorize.jwt_required()
-    return RoleActions.get_one_role(db, id)
+    return RoleActions().get_one_role(db, id)
 
 
-@router.put("/{id}", dependencies=[Depends(roles_update)],
-            status_code=status.HTTP_202_ACCEPTED,
-            responses={202: {"model": schemas_config.GodMessage}},
-            summary="Update Role Information"
-            )
-def update_role(
+@router.put(
+    "/{id}",
+    dependencies=[Depends(roles_update)],
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={202: {"model": schemas_config.GoodMessage}},
+    summary="Update Role Information",
+)
+async def update_role(
     request: role_schemas.UpdateRole,
     id: UUID,
     db: Session = Depends(get_db),
-    Authorize: AuthJWT = Depends()
+    Authorize: AuthJWT = Depends(),
+) -> JSONResponse:
+    """***Update Role***.
 
-):
-    """
-    ***Update Role*** 
-    
-    - This path operation update an role information in the app
-    by id and save the infomation from the database.
-    - **Just Admin Users** has access to this route.
+    Update the information of a role using your ID to select it.
 
-    - Request body parameter:
-    - **role: UpdateRole** -> A Role model with id and updated name.
-    - ***Path Parameter*** : 
-        - **Role id**. 
+    - This Endpoint performs the Role's Information Operation.
+    - Name and description fields are optional
+     This means that the API is left empty,
+     it will take the current value of those fields.
+    - Select the module for your ID (uuid format).
+    - Users can access when the role is assigned
+     permission **update** to the module **roles**.
 
-    Return: 
-    - **status code 202** and **string message.** 
+    **Request body parameter**:
+    - role: **UpdateRole** -> A UpdateModule model
+     with: name (Optional), description (Optional).
+
+    **Path Parameter** :
+    - Role id -> (UUDI Format).
+
+    *Return*:
+    - **JSON Response** -> string message
+    - **status code** -> 202
 
     """
     Authorize.jwt_required()
     current_user = Authorize.get_jwt_subject()
-    return RoleActions.update_role_info(db, id, request, current_user)
+    return RoleActions().update_role_info(db, id, request, current_user)
 
 
-@router.delete("/{id}/delete/",dependencies=[Depends(roles_delete)],
-               status_code=status.HTTP_204_NO_CONTENT,
-               summary="Delete specific Role using user id",
-               response_class=Response
+@router.delete(
+    "/{id}/delete/",
+    dependencies=[Depends(roles_delete)],
+    status_code=status.HTTP_204_NO_CONTENT,
+    response_class=Response,
+    summary="Delete specific Role using user id",
+)
+async def delete_role(
+    id: UUID, db: Session = Depends(get_db), Authorize: AuthJWT = Depends()
+) -> Optional[JSONResponse]:
+    """***Delete Role***.
 
-               )
-def delete_role(
-    id: UUID,
-    db: Session = Depends(get_db),
-    Authorize: AuthJWT = Depends()
-
-):
-    """
-    ***Delete Role***
-    
     - This path operation delete roles in the app by id from database
-    - **Just Admin Users** has access to this route.
+    - Users can access when the role is assigned
+     permission **delete** in the module **roles**.
+
+    ***IMPORTANT***
+    - To eliminate a role first, users associated
+     with said role must be eliminated.
 
     **Parameters**:
-
     - Access Token
-    - Request path parameter: **role id**
 
-    Return Just **CODE 204**
+    **Path Parameter**:
+    - Role ID -> (UUDI Format).
+
+    *Return*
+    - **status code** -> 204
 
     """
     Authorize.jwt_required()
-    return RoleActions.delete_one_role(db, id)
+    return RoleActions().delete_one_role(db, id)
 
 
-@router.get("/{id}/users",dependencies=[Depends(roles_read)],
-                status_code=200,
-                response_model=role_schemas.ShowRoleWithUsers,
-                summary="Show a role with the users assigned"
+@router.get(
+    "/{id}/users",
+    dependencies=[Depends(roles_read)],
+    status_code=status.HTTP_200_OK,
+    response_model=role_schemas.ShowRoleWithUsers,
+    summary="Show a role with the users assigned",
 )
-def show_role_with_users(
+async def show_role_with_users(
     id: UUID,
     db: Session = Depends(get_db),
     start: Union[int, None] = None,
     limit: Union[int, None] = None,
-    Authorize: AuthJWT = Depends()
-):
-    """
-    ***Show a role with the users*** 
-        
-    - This path operation lo que hace es pedir el id de un rol para mostrarte 
-    a todos los usuarios que tengan asignados ese rol. 
+    Authorize: AuthJWT = Depends(),
+) -> JSONResponse:
+    """***Show a role with the users***.
 
-    - **Just Admin Users** has access to this route.
+    Obtain the users assigned to a role selected the role for their id.
+
+    - This Endpoint does is ask for the id of a role to show you
+    To all users who have assigned that role.
+    - This Endpoint can also paginate these results.
+    - Users can access when the role is assigned
+     permission **read** to the module **roles**.
 
     ***Parameters***:
+    - Access Token
 
-    - **Request body parameter**:
-    - **user: ShowRoleWithUsers** -> A user model with: id, name, created_on, 
-    user_id, user_email, user_status, user_created_on,
+    **Path Parameter**:
+    - Role id -> (UUID Format).
 
-    - **Path Parameter**: 
-        - Role id. 
-    Return 
-    - **Role Model** with:
-    - Role and User information
+    **Query Parameters**:
+    - ***start*** is a initial value from start to show
+    - ***limit*** is the end of the values to show
+
+    *Return*
+    - role: **ShowRoleWithUsers** -> A ShowRoleWithUsers model
+     with: id (UUID Format), name, description, user_id (UUID Format),
+     user_email, user_is_active, user_searches
+    - **status code** -> 200
 
     """
     Authorize.jwt_required()
-    return RoleActions.show_role_with_users(db,id,start,limit)
+    return RoleActions().show_role_with_users(db, id, start, limit)
 
 
-@router.get('/{role_id}/permissions',dependencies=[Depends(roles_read)],
-            status_code=status.HTTP_200_OK
+@router.get(
+    "/{id}/permissions",
+    dependencies=[Depends(roles_read)],
+    status_code=status.HTTP_200_OK,
+    response_model=role_schemas.ShowRoleWithPermission,
+    summary="Get Specific Role by id and return permissions",
 )
-def permission_query(
-    id: UUID,    
-    db:Session = Depends(get_db),
+async def permission_query(
+    id: UUID,
+    db: Session = Depends(get_db),
     Authorize: AuthJWT = Depends(),
-    start: Union[int, None] = None,
-    limit: Union[int, None] = None
+) -> JSONResponse:
+    """**Get one Role with permissions**.
 
-):
-    """Esta funcion lo que hace es buscar por el id del role nos regresa
-    las acciones y al modulo al que pertenecen
+    Get a role with your permissions assigned in
+     the application using your ID as a filter.
+
+    - This Endpoint performs the operation of obtaining
+     the information of an application action
+     using the ID (UUDI Format), as a filter.
+    - Users can access when the role is assigned
+     permission **read** to the module **roles**.
+
+    ***Parameters***:
+    - Access Token
+
+    **Path Parameter**:
+    - role id -> (UUDI Format).
+
+    *Return*:
+    - role: **ShowRole** -> A ShowRole model
+     with: id, name, description,
+     permissions (Optional List of Permissions).
+    - **status code** -> 200
+
+
     """
-    Authorize.jwt_required()    
-    return RoleActions.show_actions_and_modules(db, id, start, limit)
-
+    Authorize.jwt_required()
+    return RoleActions().show_actions_and_modules(db, id)

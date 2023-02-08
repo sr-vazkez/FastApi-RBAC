@@ -1,15 +1,16 @@
 from typing_extensions import Self
 from fastapi import HTTPException, Depends, status
 from fastapi_another_jwt_auth import AuthJWT
+from app import main
+
 
 class RoleChecker:
-    """
-    RoleChecker
+    """Comprueba los permisos de un rol.
 
-    Esta clase comprueba a partir de un diccionario si el rol almacenado en el 
-    JWT Token del usuario en sesion tiene los permisos 
+    Esta clase comprueba a partir de un diccionario si el rol almacenado en el
+    JWT Token del usuario en sesion tiene los permisos
     para realizar sus respectivas acciones, en caso contrario
-    se levanta una HTTPExecption, y se llama a esta 
+    se levanta una HTTPExecption, y se llama a esta
     en las rutas como una dependencia.
 
     def __init__(self, allowed_roles: dict):
@@ -27,19 +28,35 @@ class RoleChecker:
         self.allowed_permissions = allowed_permissions
 
     def __call__(self: Self, Authorize: AuthJWT = Depends()) -> None:
+        """En la llamada a la clase obtenemos los permisos del JWToken.
+
+        Esto con el fin de poder compararlo y poder dar acceso a ciertos
+         endpoints de nuestro aplicativo
+
+        Args:
+            self (Self): _description_
+            Authorize (AuthJWT): Autorizacion de la libreria que usamos.
+             Defaults to Depends().
+
+        Raises:
+            HTTPException: 403 Forbidden
+        """
         Authorize.jwt_required()
         permissions = Authorize.get_raw_jwt()["permissions"]
 
-        #print("Datos del token: ", permissions)
-        #print("Lo que seteamos en la ruta: ", self.allowed_permissions)
+        # print("Datos del token: ", permissions)
+        # print("Lo que seteamos en la ruta: ", self.allowed_permissions)
 
-        if self.allowed_permissions['module'] in permissions \
-                and self.allowed_permissions['permission'] \
-                in permissions[self.allowed_permissions['module']]:
-            pass
-        else:
+        if not (
+            self.allowed_permissions["module"] in permissions  # noqa
+            and self.allowed_permissions["permission"]  # noqa
+            in permissions[self.allowed_permissions["module"]]  # noqa
+        ):
+            main.logger.info(msg="The user dont have permissions")
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 headers={"WWW-Authenticate": "Bearer"},
-                detail={"success": False,
-                        "msg": "Tú no tienes acceso a este recurso."})
+                detail={"success": False, "msg": "Tú no tienes acceso a este recurso."},
+            )
+        else:
+            main.logger.info(msg="User has a permissions")

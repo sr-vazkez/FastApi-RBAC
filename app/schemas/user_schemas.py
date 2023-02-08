@@ -1,4 +1,3 @@
-from datetime import datetime
 from uuid import UUID
 from uuid import uuid4
 from typing_extensions import Annotated
@@ -12,14 +11,15 @@ class UserBase(BaseModel):
     Args:
         BaseModel (BaseModel): Pydantic BaseModel
     """
-    email: EmailStr = Field(...)
 
-    class Config():
+    email: EmailStr = Field(..., example="yourmail@mail.com")
+
+    class Config:
         """Habilitamos el modo orm.
 
         Para no tener problemas con el ORM.
         """
-        
+
         orm_mode = True
 
 
@@ -30,9 +30,14 @@ class Users(UserBase):
         UserBase (BaseModel): : Herencia del modelo para
          evitar escribir mas.
     """
-    
-    id: Annotated[str, Field(default_factory=lambda: uuid4(
-    ).hex, example="dff942ee-1f41-11ed-861d-0242ac120002"), ]
+
+    id: Annotated[
+        str,
+        Field(
+            default_factory=lambda: uuid4().hex,
+            example="dff942ee-1f41-11ed-861d-0242ac120002",
+        ),
+    ]
 
 
 class UserCreate(UserBase):
@@ -43,14 +48,8 @@ class UserCreate(UserBase):
          evitar escribir mas.
     """
 
-    password: str = Field(
-        ...,
-        min_length=8
-    )
-    role_id: UUID = Field(
-        ...,
-        example="dff942ee-1f41-11ed-861d-0242ac120002"
-    )
+    password: str = Field(..., min_length=8, example="4Y!fzS$sCh!4T2FQ4", max_length=52)
+    role_id: UUID = Field(..., example="dff942ee-1f41-11ed-861d-0242ac120002")
 
 
 class UpdatePassMe(BaseModel):
@@ -61,18 +60,15 @@ class UpdatePassMe(BaseModel):
     """
 
     actual_password: str = Field(
-        ...,
-        min_length=8
+        ..., min_length=8, example="4Y!fzS$sCh!4T2FQ4", max_length=52
     )
     new_password: str = Field(
-        ...,
-        min_length=8
+        ..., min_length=8, example="4Y!fzS$sCh!4T2FQ4", max_length=52
     )
     password_confirmation: str = Field(
-        ...,
-        min_length=8
+        ..., min_length=8, example="4Y!fzS$sCh!4T2FQ4", max_length=52
     )
-    #!Custom Error
+    # Custom Error
 
     @root_validator()
     def password_macth(vls, values):
@@ -93,10 +89,10 @@ class UpdatePassMe(BaseModel):
         new_password = values.get("new_password")
         password_confirmation = values.get("password_confirmation")
         if new_password != password_confirmation:
-            raise ValueError('Password don´t macth')
+            raise ValueError("Password don´t macth")
         return values
 
-    class Config():
+    class Config:
         """Habilitamos el modo orm.
 
         Para no tener problemas con el ORM.
@@ -113,14 +109,12 @@ class UpdatePass(BaseModel):
     """
 
     new_password: str = Field(
-        ...,
-        min_length=8
+        ..., min_length=8, example="4Y!fzS$sCh!4T2FQ4", max_length=52
     )
     password_confirmation: str = Field(
-        ...,
-        min_length=8
+        ..., min_length=8, example="4Y!fzS$sCh!4T2FQ4", max_length=52
     )
-    #!Custom Error
+    # Custom Error
 
     @root_validator()
     def password_macth(vls, values):
@@ -141,7 +135,7 @@ class UpdatePass(BaseModel):
         new_password = values.get("new_password")
         password_confirmation = values.get("password_confirmation")
         if new_password != password_confirmation:
-            raise ValueError('Password don´t macth')
+            raise ValueError("Password don´t macth")
         return values
 
 
@@ -152,10 +146,18 @@ class UpdateUser(BaseModel):
         BaseModel (BaseModel): Pydantic BaseModel
     """
 
-    email: Optional[EmailStr] = Field(None, description="Email of the user")
-    status: Optional[bool] = True
+    email: Optional[EmailStr] = Field(
+        None, description="Email of the user", example="youremail@email.com"
+    )
+    is_active: Optional[bool] = True
+    role_id: UUID = Field(..., example="dff942ee-1f41-11ed-861d-0242ac120002")
 
-    class Config():
+    class Config:
+        """Habilitamos el modo orm.
+
+        Para no tener problemas con el ORM.
+        """
+
         orm_mode = True
 
 
@@ -166,18 +168,25 @@ class ShowInfoUser(BaseModel):
         BaseModel (BaseModel): Pydantic BaseModel
     """
 
-    id: Annotated[str, Field(default_factory=lambda: uuid4(
-    ).hex, example="dff942ee-1f41-11ed-861d-0242ac120002"), ]
+    id: Annotated[
+        str,
+        Field(
+            default_factory=lambda: uuid4().hex,
+            example="dff942ee-1f41-11ed-861d-0242ac120002",
+        ),
+    ]
     email: EmailStr = Field(...)
-    status: Optional[bool] = True
-    created_on: datetime
-    role_id: Annotated[str, Field(default_factory=lambda: uuid4(
-    ).hex, example="dff942ee-1f41-11ed-861d-0242ac120002"), ]
+    is_active: Optional[bool] = True
+    role_id: Annotated[
+        str,
+        Field(
+            default_factory=lambda: uuid4().hex,
+            example="dff942ee-1f41-11ed-861d-0242ac120002",
+        ),
+    ]
     role_name: Optional[str] = Field(None, description="Name of the role")
-    role_created_on: Optional[datetime] = Field(
-        None, description="Created on of the role")
 
-    class Config():
+    class Config:
         """Habilitamos el modo orm.
 
         Para no tener problemas con el ORM.
@@ -197,7 +206,7 @@ class ShowUsers(BaseModel):
     numRows: int
     data: List[ShowInfoUser]
 
-    class Config():
+    class Config:
         """Habilitamos el modo orm.
 
         Para no tener problemas con el ORM.
@@ -216,7 +225,7 @@ class ShowUser(BaseModel):
     success: bool = True
     data: ShowInfoUser
 
-    class Config():
+    class Config:
         """Habilitamos el modo orm.
 
         Para no tener problemas con el ORM.
@@ -235,9 +244,10 @@ class ShowUserWithRole(BaseModel):
     success: bool = True
     data: ShowInfoUser
 
-    class Config():
+    class Config:
         """Habilitamos el modo orm.
 
         Para no tener problemas con el ORM.
         """
+
         orm_mode = True
